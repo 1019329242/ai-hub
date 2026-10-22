@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 导航 · 一网打尽各领域 AI 官网</title>
+<style>
+  :root{
+    --bg:#0b0f1a; --bg2:#121829; --card:#161d2e; --card-hover:#1d2740;
+    --line:rgba(255,255,255,.08); --txt:#e8eaf0; --sub:#9aa3b2; --accent:#6c8cff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,"Segoe UI","PingFang SC",sans-serif;background:radial-gradient(1200px 600px at 50% -10%,#1a2540 0%,var(--bg) 55%);color:var(--txt);min-height:100vh;padding:0 0 60px}
+  .game{position:relative;max-width:1180px;margin:18px auto 0;padding:0 20px}
+  .game canvas{width:100%;height:130px;display:block;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;cursor:pointer}
+  .game .gtip{position:absolute;bottom:6px;left:16px;font-size:11px;color:var(--sub);pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,.4)}
+  .game .overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(8,12,22,.74);border-radius:14px;text-align:center;padding:0 16px}
+  .game .overlay.hidden{display:none}
+  .game .ov-title{font-size:22px;font-weight:800;color:#fff}
+  .game .ov-sub{font-size:12px;color:var(--sub);max-width:90%}
+  .game .ov-score{font-size:15px;color:#e8eaf0}
+  .game .ov-score b{color:#ffd166}
+  .game .ov-btn{padding:10px 30px;border:none;border-radius:10px;background:linear-gradient(90deg,#6c8cff,#9b6cff);color:#fff;font-size:15px;font-weight:700;cursor:pointer;transition:.15s}
+  .game .ov-btn:hover{opacity:.92;transform:translateY(-1px)}
+  header{text-align:center;padding:54px 20px 28px}
+  header h1{font-size:34px;letter-spacing:1px;background:linear-gradient(90deg,#8aa2ff,#b98cff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  header p{color:var(--sub);margin-top:10px;font-size:14px}
+  .search{max-width:520px;margin:26px auto 0;position:relative}
+  .search input{width:100%;padding:14px 18px 14px 44px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--txt);font-size:15px;outline:none}
+  .search input:focus{border-color:var(--accent)}
+  .search svg{position:absolute;left:15px;top:50%;transform:translateY(-50%);opacity:.5}
+  .tabs{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:980px;margin:30px auto 10px;padding:0 16px}
+  .tab{padding:8px 16px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--sub);font-size:13px;cursor:pointer;transition:.18s}
+  .tab:hover{color:var(--txt)}
+  .tab.active{background:linear-gradient(90deg,#6c8cff,#9b6cff);color:#fff;border-color:transparent}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+  .group{margin-top:38px}
+  .group h2{font-size:18px;margin-bottom:16px;display:flex;align-items:center;gap:9px;color:#fff;padding-left:4px}
+  .group h2 .dot{width:9px;height:9px;border-radius:3px;background:var(--accent)}
+  .group h2 .cnt{color:var(--sub);font-weight:400;font-size:13px}
+  .group h2 .add{margin-left:auto;width:26px;height:26px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--accent);font-size:18px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.18s}
+  .group h2 .add:hover{background:var(--accent);color:#fff;border-color:transparent}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 14px;text-align:center;cursor:pointer;text-decoration:none;color:inherit;transition:.18s;display:flex;flex-direction:column;align-items:center;gap:10px;position:relative}
+  .card:hover{transform:translateY(-5px);background:var(--card-hover);border-color:var(--accent);box-shadow:0 10px 30px rgba(108,140,255,.18)}
+  .ico{width:54px;height:54px;border-radius:15px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:19px;color:#fff;letter-spacing:.5px;box-shadow:0 6px 16px rgba(0,0,0,.35);position:relative;overflow:hidden}
+  .ico .let{line-height:1}
+  .ico .lg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#fff;border-radius:15px}
+  .card .name{font-size:14px;font-weight:600;color:var(--txt);cursor:text;border-radius:6px;padding:1px 4px;outline:none}
+  .card .name:hover{background:rgba(255,255,255,.06)}
+  .card .name:focus{background:rgba(108,140,255,.15);box-shadow:0 0 0 1px var(--accent)}
+  .card .desc{font-size:11px;color:var(--sub);line-height:1.4;min-height:30px}
+  .card .del{position:absolute;top:6px;right:8px;font-size:12px;color:var(--sub);opacity:0;cursor:pointer;transition:.15s}
+  .card:hover .del{opacity:1}
+  .card .del:hover{color:#ff6b6b}
+  .empty{text-align:center;color:var(--sub);padding:60px 0;font-size:15px;display:none}
+  footer{text-align:center;color:var(--sub);font-size:12px;margin-top:54px;padding:0 20px}
+  footer a{color:var(--accent);text-decoration:none}
+  .corner-actions{position:fixed;right:16px;bottom:16px;z-index:60;display:flex;gap:10px;align-items:center}
+  .save-btn,.reset-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 15px;border:none;border-radius:12px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.22);transition:.15s}
+  .save-btn{background:linear-gradient(90deg,#3ec6a8,#2aa6c9)}
+  .reset-btn{background:linear-gradient(90deg,#ff7a7a,#ff5470)}
+  .save-btn:hover,.reset-btn:hover{transform:translateY(-1px);opacity:.94}
+  .save-btn:active,.reset-btn:active{transform:translateY(0)}
+  /* 弹窗 */
+  .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);align-items:center;justify-content:center;z-index:50}
+  .modal-box{background:#161d2e;border:1px solid var(--line);border-radius:16px;padding:24px;width:360px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  .modal-box h3{margin-bottom:6px;font-size:17px}
+  .modal-box .hint{font-size:12px;color:var(--sub);margin-bottom:12px}
+  .modal-box label{display:block;font-size:12px;color:var(--sub);margin:10px 0 4px}
+  .modal-box input{width:100%;padding:9px 12px;border-radius:9px;border:1px solid var(--line);background:#0f1422;color:var(--txt);font-size:14px;outline:none}
+  .modal-box input:focus{border-color:var(--accent)}
+  .modal-actions{display:flex;gap:10px;margin-top:18px;justify-content:flex-end}
+  .modal-actions button{padding:9px 18px;border-radius:9px;border:1px solid var(--line);background:transparent;color:var(--txt);cursor:pointer;font-size:14px}
+  .modal-actions .primary{background:linear-gradient(90deg,#6c8cff,#9b6cff);border-color:transparent;color:#fff}
+</style>
+</head>
+<body>
+<div class='game'>
+  <canvas id='game'></canvas>
+  <div class='gtip'>🦖 空格/↑/点击 跳跃(二段跳) · 躲障碍 · 吃金币 · 越来越快</div>
+  <div class='overlay' id='ovStart'>
+    <div class='ov-title'>🦖 恐龙快跑</div>
+    <div class='ov-sub'>空格 / ↑ / 点击 跳跃 · 空中再按一次二段跳 · 吃金币加分 · 速度越来越快</div>
+    <button class='ov-btn' id='btnStart'>开始游戏</button>
+  </div>
+  <div class='overlay hidden' id='ovOver'>
+    <div class='ov-title'>游戏结束</div>
+    <div class='ov-score'>本局得分 <b id='finalScore'>0</b> · 最高 <b id='bestScore'>0</b></div>
+    <button class='ov-btn' id='btnRestart'>重新开始</button>
+  </div>
+</div>
+<header>
+  <h1>🤖 AI自定义导航站</h1>
+  <p>按领域聚合全球主流 AI 工具 · 点击图标直达官网 · 共 <span id="count">0</span> 个 · 点板块右上 ＋ 可手动添加</p>
+  <div class="search">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+    <input id="q" type="text" placeholder="搜索 AI 工具，如 ChatGPT / 视频 / 智能体…" oninput="render()">
+  </div>
+</header>
+
+<div class="tabs" id="tabs"></div>
+<div class="wrap" id="app"></div>
+<div class="empty" id="empty">😶 没有找到匹配的 AI 工具，换个关键词试试</div>
+<footer>此网站设计作者为：孙向东，使用AI制作，联系电话15738950611</footer>
+<div class="corner-actions">
+  <button id="saveBtn" class="save-btn" title="一键保存：把整个网站（含你的自定义链接与记录）打包成压缩包，方便拷贝到其他电脑运行">💾 一键保存</button>
+  <button id="resetBtn" class="reset-btn" title="一键重置：清空本地数据并恢复初始状态">↻ 一键重置</button>
+</div>
+
+<div id="confirmReset" class="modal" style="display:none" onclick="if(event.target===this)hideResetConfirm()">
+  <div class="modal-box" style="text-align:center">
+    <div style="font-size:17px;font-weight:700;margin-bottom:8px;color:#fff">确定一键重置？</div>
+    <div style="font-size:13px;color:var(--sub);line-height:1.6;margin-bottom:18px">将清空：手动添加的链接、删除的链接、游戏最高分与彩蛋进度，并恢复初始状态。</div>
+    <div class="modal-actions" style="justify-content:center">
+      <button onclick="hideResetConfirm()">取消</button>
+      <button class="primary" onclick="doReset()">确定重置</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal" class="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <h3>添加 AI 工具</h3>
+    <div class="hint">填网址即可，图标与缩写会自动生成，名称随时可点改</div>
+    <label>名称</label><input id="m-name" placeholder="例如：我的工具">
+    <label>网址（必填）</label><input id="m-url" placeholder="https://...">
+    <label>描述（可选）</label><input id="m-desc" placeholder="一句话说明">
+    <label>所属分类</label><input id="m-cat" placeholder="选择一个分类">
+    <div class="modal-actions">
+      <button onclick="closeModal()">取消</button>
+      <button class="primary" onclick="addTool()">确定添加</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const DATA = [
+  // 对话 / 大模型
+  {cat:"对话大模型",name:"ChatGPT",desc:"OpenAI 通用对话",url:"https://chat.openai.com",c:"#10a37f",i:"GPT"},
+  {cat:"对话大模型",name:"Claude",desc:"Anthropic 长文本助手",url:"https://claude.ai",c:"#d97757",i:"C"},
+  {cat:"对话大模型",name:"Gemini",desc:"Google 多模态模型",url:"https://gemini.google.com",c:"#4285f4",i:"G"},
+  {cat:"对话大模型",name:"Copilot",desc:"微软全家桶 AI",url:"https://copilot.microsoft.com",c:"#0078d4",i:"Co"},
+  {cat:"对话大模型",name:"DeepSeek",desc:"深度求索大模型",url:"https://www.deepseek.com",c:"#4d6bfe",i:"DS"},
+  {cat:"对话大模型",name:"文心一言",desc:"百度 ERNIE 大模型",url:"https://yiyan.baidu.com",c:"#2932e1",i:"文"},
+  {cat:"对话大模型",name:"通义千问",desc:"阿里大模型",url:"https://tongyi.aliyun.com",c:"#615ced",i:"通"},
+  {cat:"对话大模型",name:"豆包",desc:"字节跳动 AI",url:"https://www.doubao.com",c:"#222",i:"豆"},
+  {cat:"对话大模型",name:"Kimi",desc:"月之暗面长文本",url:"https://kimi.moonshot.cn",c:"#1a1a1a",i:"K"},
+  {cat:"对话大模型",name:"智谱清言",desc:"GLM 大模型",url:"https://chatglm.cn",c:"#0099ff",i:"智"},
+  {cat:"对话大模型",name:"元宝",desc:"腾讯混元大模型",url:"https://yuanbao.tencent.com",c:"#0052ff",i:"元"},
+  {cat:"对话大模型",name:"讯飞星火",desc:"科大讯飞认知大模型",url:"https://xinghuo.xfyun.cn",c:"#1a73e8",i:"星"},
+  // 图像生成
+  {cat:"图像生成",name:"Midjourney",desc:"高质量 AI 绘画",url:"https://www.midjourney.com",c:"#000",i:"MJ"},
+  {cat:"图像生成",name:"DALL·E",desc:"OpenAI 文生图",url:"https://openai.com/dall-e",c:"#10a37f",i:"DE"},
+  {cat:"图像生成",name:"Stable Diffusion",desc:"开源扩散模型",url:"https://stability.ai",c:"#ffcd00",i:"SD",t:"#000"},
+  {cat:"图像生成",name:"通义万相",desc:"阿里文生图",url:"https://tongyi.aliyun.com/wanxiang",c:"#615ced",i:"相"},
+  {cat:"图像生成",name:"Ideogram",desc:"带文字的图像生成",url:"https://ideogram.ai",c:"#111",i:"Ig"},
+  {cat:"图像生成",name:"Leonardo",desc:"游戏/设计素材",url:"https://leonardo.ai",c:"#1e2a4a",i:"Le"},
+  // 视频生成
+  {cat:"视频生成",name:"可灵 AI",desc:"快手视频生成",url:"https://klingai.com",c:"#ff5000",i:"灵"},
+  {cat:"视频生成",name:"即梦",desc:"剪映旗下视频",url:"https://jimeng.jianying.com",c:"#ff2d55",i:"梦"},
+  {cat:"视频生成",name:"Runway",desc:"专业 AI 视频",url:"https://runwayml.com",c:"#00ff9d",i:"R",t:"#000"},
+  {cat:"视频生成",name:"Pika",desc:"趣味文生视频",url:"https://pika.art",c:"#111",i:"Pi"},
+  {cat:"视频生成",name:"Sora",desc:"OpenAI 视频模型",url:"https://openai.com/sora",c:"#10a37f",i:"So"},
+  {cat:"视频生成",name:"Luma",desc:"Dream Machine",url:"https://lumalabs.ai",c:"#111",i:"Lu"},
+  {cat:"视频生成",name:"海螺 AI",desc:"MiniMax 视频",url:"https://hailuoai.video",c:"#111",i:"螺"},
+  {cat:"视频生成",name:"Gemini Omni Flash",desc:"Google 视频模型",url:"https://gemini.google.com",c:"#4285f4",i:"Gf"},
+  {cat:"视频生成",name:"Seedance",desc:"字节视频大模型",url:"https://seeddance.ai/zh/seedance-2-0",c:"#00c2a8",i:"Se"},
+  {cat:"视频生成",name:"Wan",desc:"阿里通义万相视频",url:"https://wan.video",c:"#615ced",i:"Wan"},
+  {cat:"视频生成",name:"LTX",desc:"Lightricks 实时视频",url:"https://ltx.dev",c:"#1b2a4a",i:"LTX"},
+  {cat:"视频生成",name:"libTV",desc:"LiblibAI 视频创作",url:"https://www.liblib.tv",c:"#7c5cff",i:"TV"},
+  {cat:"视频生成",name:"ComfyUI",desc:"节点式工作流",url:"https://www.comfy.org",c:"#111",i:"Cf"},
+  {cat:"视频生成",name:"剪映",desc:"字节视频剪辑 AI",url:"https://www.jianying.com",c:"#00e676",i:"剪"},
+  {cat:"视频生成",name:"HappyHorse",desc:"快乐小马视频模型",url:"https://www.happyhorse.cn",c:"#e23b3b",i:"HH"},
+  // 音频 / 音乐
+  {cat:"音频音乐",name:"Suno",desc:"一句话写歌",url:"https://suno.com",c:"#ff7a00",i:"Su"},
+  {cat:"音频音乐",name:"Udio",desc:"AI 音乐生成",url:"https://udio.com",c:"#6b4fbb",i:"Ud"},
+  {cat:"音频音乐",name:"ElevenLabs",desc:"拟真语音合成",url:"https://elevenlabs.io",c:"#111",i:"11"},
+  // 编程开发
+  {cat:"编程开发",name:"GitHub Copilot",desc:"程序员结对助手",url:"https://github.com/features/copilot",c:"#24292e",i:"Co"},
+  {cat:"编程开发",name:"Cursor",desc:"AI 原生编辑器",url:"https://cursor.com",c:"#111",i:"Cu"},
+  {cat:"编程开发",name:"Codeium",desc:"免费编程补全",url:"https://codeium.com",c:"#1a73e8",i:"Cd"},
+  {cat:"编程开发",name:"通义灵码",desc:"阿里编码助手",url:"https://tongyi.aliyun.com/lingma",c:"#615ced",i:"码"},
+  {cat:"编程开发",name:"Claude Code",desc:"终端编程 Agent",url:"https://claude.ai/code",c:"#d97757",i:"CC"},
+  {cat:"编程开发",name:"Windsurf",desc:"AI 编程 IDE",url:"https://windsurf.com",c:"#111",i:"Ws"},
+  {cat:"编程开发",name:"VS Code",desc:"微软代码编辑器官网下载",url:"https://code.visualstudio.com",c:"#007acc",i:"VS"},
+  // 办公生产力
+  {cat:"办公生产力",name:"Notion AI",desc:"文档智能助手",url:"https://www.notion.so/product/ai",c:"#111",i:"N"},
+  {cat:"办公生产力",name:"飞书智能伙伴",desc:"字节协作 AI",url:"https://www.feishu.cn/product/ai",c:"#3370ff",i:"飞"},
+  {cat:"办公生产力",name:"钉钉 AI",desc:"阿里办公 AI",url:"https://www.dingtalk.com",c:"#1677ff",i:"钉"},
+  {cat:"办公生产力",name:"Gamma",desc:"AI 演示文稿",url:"https://gamma.app",c:"#6e59f2",i:"Ga"},
+  // 3D 与设计
+  {cat:"3D与设计",name:"Tripo",desc:"文字/图生 3D",url:"https://www.tripo3d.ai",c:"#111",i:"Tr"},
+  {cat:"3D与设计",name:"Meshy",desc:"AI 3D 资产生成",url:"https://www.meshy.ai",c:"#111",i:"Me"},
+  {cat:"3D与设计",name:"腾讯混元3D",desc:"腾讯 3D 生成",url:"https://3d.hunyuan.tencent.com",c:"#0052ff",i:"3D"},
+  {cat:"3D与设计",name:"Mixamo",desc:"Adobe 角色动画",url:"https://www.mixamo.com",c:"#fa0f00",i:"Mx"},
+  // AI 导航（聚合导航站）
+  {cat:"AI导航",name:"aig123",desc:"AI 工具导航站",url:"https://aig123.com",c:"#ff6a00",i:"A1"},
+  {cat:"AI导航",name:"AI-Bot",desc:"AI 工具集导航",url:"https://www.ai-bot.cn",c:"#2b7de9",i:"AB"},
+  {cat:"AI导航",name:"AIHub",desc:"AI 产品导航",url:"https://www.aihub.cn",c:"#7b5cff",i:"AH"},
+  {cat:"AI导航",name:"Futurepedia",desc:"AI 工具发现",url:"https://www.futurepedia.io",c:"#111",i:"Fp"},
+  {cat:"AI导航",name:"Toolify",desc:"AI 工具榜单",url:"https://www.toolify.ai",c:"#1aa179",i:"Tf"},
+  // AI 绘画社区
+  {cat:"AI绘画社区",name:"Civitai",desc:"模型/绘画社区",url:"https://civitai.com",c:"#e84393",i:"Ci"},
+  {cat:"AI绘画社区",name:"LiblibAI",desc:"哩布哩布社区",url:"https://www.liblib.art",c:"#7c5cff",i:"Lb"},
+  {cat:"AI绘画社区",name:"站酷",desc:"设计师社区",url:"https://www.zcool.com.cn",c:"#ff4d4f",i:"ZK"},
+  {cat:"AI绘画社区",name:"花瓣",desc:"创意灵感社区",url:"https://huaban.com",c:"#ff7a00",i:"HB"},
+  // 翻译
+  {cat:"翻译",name:"DeepL",desc:"精准机器翻译",url:"https://www.deepl.com",c:"#1a1a1a",i:"DL"},
+  {cat:"翻译",name:"百度翻译",desc:"百度翻译",url:"https://fanyi.baidu.com",c:"#2932e1",i:"百"},
+  {cat:"翻译",name:"有道翻译",desc:"网易有道",url:"https://fanyi.youdao.com",c:"#d4282d",i:"有"},
+  {cat:"翻译",name:"Google 翻译",desc:"Google Translate",url:"https://translate.google.com",c:"#4285f4",i:"Gg"},
+  // 数字人
+  {cat:"数字人",name:"HeyGen",desc:"AI 数字人视频",url:"https://www.heygen.com",c:"#111",i:"Hg"},
+  {cat:"数字人",name:"D-ID",desc:"数字人说话视频",url:"https://www.d-id.com",c:"#1c8c4a",i:"D-"},
+  {cat:"数字人",name:"腾讯智影",desc:"腾讯数字人",url:"https://zenvideo.qq.com",c:"#0052ff",i:"智"},
+  {cat:"数字人",name:"硅基智能",desc:"硅基数字人",url:"https://www.guiji.ai",c:"#7b5cff",i:"硅"},
+  {cat:"数字人",name:"即创",desc:"字节数字人",url:"https://aic.oceanengine.com",c:"#ff5000",i:"即"},
+  // AI 智能体
+  {cat:"AI智能体",name:"WorkBuddy",desc:"腾讯 AI Agent 办公",url:"https://workbuddy.cn",c:"#0052ff",i:"WB"},
+  {cat:"AI智能体",name:"扣子空间",desc:"Coze 智能体平台",url:"https://www.coze.cn",c:"#2b5cff",i:"扣"},
+  {cat:"AI智能体",name:"Codex",desc:"OpenAI 编程智能体",url:"https://openai.com/codex",c:"#10a37f",i:"Cx"},
+  {cat:"AI智能体",name:"骡子快跑",desc:"MuleRun 企业智能体",url:"https://mulerun.com",c:"#b5651d",i:"骡"},
+  {cat:"AI智能体",name:"百度秒哒",desc:"无代码应用生成",url:"https://www.miaoda.cn",c:"#2932e1",i:"秒"},
+  {cat:"AI智能体",name:"百度搭子",desc:"DuMate 办公智能体",url:"https://www.dumate.cn",c:"#3388ff",i:"搭"},
+  {cat:"AI智能体",name:"办公小浣熊",desc:"商汤 Raccoon 助手",url:"https://xiaohuanxiong.com",c:"#ff7a00",i:"熊"},
+  // AI 搜索
+  {cat:"AI搜索",name:"Perplexity",desc:"对话式搜索引擎",url:"https://www.perplexity.ai",c:"#20808d",i:"Pe"},
+  {cat:"AI搜索",name:"秘塔搜索",desc:"中文 AI 搜索",url:"https://metaso.cn",c:"#111",i:"秘"},
+];
+
+const BASE_DATA = DATA.map(x=>({...x})); // 初始数据快照，用于一键重置就地恢复
+const LS_KEY = "aihub_user_tools";
+const LS_DEL = "aihub_deleted";
+let deleted = [];
+function loadState(){
+  try{ const a=JSON.parse(localStorage.getItem(LS_KEY)||"[]"); a.forEach(x=>DATA.push(x)); }catch(e){}
+  try{ deleted = JSON.parse(localStorage.getItem(LS_DEL)||"[]"); }catch(e){}
+  for(let i=DATA.length-1;i>=0;i--){ if(!DATA[i].user && deleted.includes(DATA[i].url)) DATA.splice(i,1); }
+}
+function saveState(){
+  localStorage.setItem(LS_KEY, JSON.stringify(DATA.filter(d=>d.user)));
+  localStorage.setItem(LS_DEL, JSON.stringify(deleted));
+}
+loadState();
+
+let activeCat = "全部";
+const tabsEl = document.getElementById("tabs");
+
+function buildTabs(){
+  const cats = ["全部", ...Array.from(new Set(DATA.map(d=>d.cat)))];
+  tabsEl.innerHTML = cats.map(c=>
+    `<div class="tab${c===activeCat?' active':''}" onclick="setCat('${c.replace(/'/g,"\\'")}')">${c}</div>`).join("");
+}
+function setCat(c){ activeCat=c; buildTabs(); render(); }
+
+function autoColor(name){
+  let h=0; for(let i=0;i<name.length;i++) h=name.charCodeAt(i)+((h<<5)-h);
+  h=Math.abs(h)%360; return `hsl(${h},62%,52%)`;
+}
+function autoIcon(name){
+  const m=name.trim();
+  if(!m) return "?";
+  if(/[一-龥]/.test(m[0])) return m[0];
+  return m.replace(/[^A-Za-z0-9]/g,"").slice(0,2).toUpperCase()||"?";
+}
+
+function iconStyle(d){ return `background:${d.c};color:${d.t||'#fff'}`; }
+function icoHtml(d){
+  let domain="";
+  try{ domain=new URL(d.url).hostname.replace(/^www\./,""); }catch(e){}
+  if(!domain) return `<div class="ico" style="${iconStyle(d)}">${d.i}</div>`;
+  return `<div class="ico" style="${iconStyle(d)}"><span class="let">${d.i}</span><img class="lg" src="https://icon.horse/icon/${domain}" alt="${d.name}" loading="lazy" onerror="this.style.display='none'"></div>`;
+}
+
+function render(){
+  buildTabs();
+  const q = document.getElementById("q").value.trim().toLowerCase();
+  const list = DATA.filter(d=>{
+    const okCat = activeCat==="全部" || d.cat===activeCat;
+    const okQ = !q || d.name.toLowerCase().includes(q) || d.desc.toLowerCase().includes(q) || d.cat.toLowerCase().includes(q);
+    return okCat && okQ;
+  });
+  const app = document.getElementById("app");
+  document.getElementById("empty").style.display = list.length? "none":"block";
+  const groups = {};
+  list.forEach(d=>{(groups[d.cat]=groups[d.cat]||[]).push(d);});
+  app.innerHTML = Object.keys(groups).map(cat=>`
+    <div class="group">
+      <h2><span class="dot"></span>${cat}<span class="cnt"> · ${groups[cat].length}</span>
+        <span class="add" title="添加工具" onclick="openModal('${cat.replace(/'/g,"\\'")}')">＋</span></h2>
+      <div class="grid">${groups[cat].map(d=>`
+        <a class="card" href="${d.url}" target="_blank" rel="noopener">
+          <span class="del" title="删除" onclick="event.preventDefault();event.stopPropagation();delTool('${encodeURIComponent(d.url).replace(/'/g,"\\'")}')">✕</span>
+          ${icoHtml(d)}
+          <div class="name" contenteditable="false" data-url="${encodeURIComponent(d.url)}"
+               ondblclick="startEdit(event,this)" onclick="startEdit(event,this)">${d.name}</div>
+          <div class="desc">${d.desc}</div>
+        </a>`).join("")}
+      </div>
+    </div>`).join("");
+  document.getElementById("count").textContent = DATA.length;
+}
+
+/* 名称就地编辑 */
+function startEdit(e,el){
+  e.preventDefault(); e.stopPropagation();
+  el.contentEditable=true; el.focus();
+  const r=document.createRange(); r.selectNodeContents(el);
+  const s=getSelection(); s.removeAllRanges(); s.addRange(r);
+  el.onblur=()=>{ el.contentEditable=false; const it=DATA.find(d=>d.url===decodeURIComponent(el.dataset.url)); if(it) it.name=el.textContent.trim()||it.name; saveState(); };
+}
+
+/* 添加工具弹窗 */
+function openModal(cat){
+  document.getElementById("m-cat").value=cat||"";
+  document.getElementById("m-name").value="";
+  document.getElementById("m-url").value="";
+  document.getElementById("m-desc").value="";
+  document.getElementById("modal").style.display="flex";
+  document.getElementById("m-name").focus();
+}
+function closeModal(){ document.getElementById("modal").style.display="none"; }
+function addTool(){
+  const name=document.getElementById("m-name").value.trim();
+  let url=document.getElementById("m-url").value.trim();
+  const desc=document.getElementById("m-desc").value.trim();
+  const cat=document.getElementById("m-cat").value.trim()||"其他";
+  if(!url){ alert("请填写网址"); return; }
+  if(!/^https?:\/\//i.test(url)) url="https://"+url;
+  const item={cat,name:name||url.replace(/^https?:\/\//,"").split("/")[0],url,desc:desc||name||"自定义工具",c:autoColor(name||url),i:autoIcon(name||url),user:true};
+  DATA.push(item); saveState(); closeModal(); activeCat="全部"; render();
+}
+function delTool(enc){
+  const url=decodeURIComponent(enc);
+  const idx=DATA.findIndex(d=>d.url===url);
+  if(idx>-1){
+    if(!DATA[idx].user && !deleted.includes(url)) deleted.push(url);
+    DATA.splice(idx,1); saveState(); render();
+  }
+}
+render();
+
+/* 一键重置：清空本地数据并刷新恢复初始状态 */
+const resetBtn=document.getElementById('resetBtn');
+if(resetBtn) resetBtn.onclick=showResetConfirm;
+function showResetConfirm(){ const c=document.getElementById('confirmReset'); if(c) c.style.display='flex'; }
+function hideResetConfirm(){ const c=document.getElementById('confirmReset'); if(c) c.style.display='none'; }
+function doReset(){
+  hideResetConfirm();
+  try{
+    localStorage.removeItem('aihub_user_tools');
+    localStorage.removeItem('aihub_deleted');
+    localStorage.removeItem('aihub_game_best');
+    localStorage.removeItem('aihub_game_egg');
+  }catch(e){}
+  // 就地恢复初始数据：即使 reload 被沙箱拦截，可见的卡片/链接也立即复位
+  try{
+    DATA.length=0; BASE_DATA.forEach(x=>DATA.push({...x}));
+    deleted.length=0;
+    activeCat="全部";
+    const q=document.getElementById('q'); if(q) q.value="";
+    render();
+  }catch(e){}
+  // 强制从服务器刷新，确保游戏最高分与彩蛋进度也复位
+  try{ location.reload(true); }catch(e){}
+}
+
+/* 轻量提示（不依赖原生 alert/confirm，沙箱内也可用）*/
+function toastMsg(msg){
+  let el=document.getElementById('miniToast');
+  if(!el){ el=document.createElement('div'); el.id='miniToast';
+    el.style.cssText='position:fixed;left:50%;top:18px;transform:translateX(-50%);z-index:80;background:rgba(20,26,42,.95);color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.35);transition:opacity .3s;pointer-events:none';
+    document.body.appendChild(el); }
+  el.textContent=msg; el.style.opacity='1';
+  clearTimeout(toastMsg._t); toastMsg._t=setTimeout(function(){ el.style.opacity='0'; }, 1800);
+}
+
+/* 一键保存：用纯 JS 生成 ZIP（无需联网/第三方库），把整站与当前数据打包，方便拷贝到其他电脑运行 */
+const saveBtn=document.getElementById('saveBtn');
+if(saveBtn) saveBtn.onclick=savePackage;
+function crc32(buf){
+  if(!crc32.t){ const t=[]; for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c=c&1?0xEDB88320^(c>>>1):c>>>1; t[n]=c>>>0; } crc32.t=t; }
+  let crc=0xFFFFFFFF; for(let i=0;i<buf.length;i++) crc=(crc>>>8)^crc32.t[(crc^buf[i])&0xFF];
+  return (crc^0xFFFFFFFF)>>>0;
+}
+function makeZip(files){
+  const enc=new TextEncoder(); const chunks=[]; const central=[]; let offset=0;
+  const now=new Date();
+  const t=(now.getHours()<<11)|(now.getMinutes()<<5)|(now.getSeconds()>>1);
+  const d=(((now.getFullYear()-1980)<<9)|((now.getMonth()+1)<<5)|now.getDate())&0xFFFF;
+  for(const f of files){
+    const name=enc.encode(f.name); const data=f.data instanceof Uint8Array?f.data:enc.encode(f.data);
+    const crc=crc32(data);
+    const lh=new Uint8Array(30+name.length); const lv=new DataView(lh.buffer);
+    lv.setUint32(0,0x04034b50,true); lv.setUint16(4,20,true); lv.setUint16(6,0x0800,true);
+    lv.setUint16(8,0,true); lv.setUint16(10,t,true); lv.setUint16(12,d,true);
+    lv.setUint32(14,crc,true); lv.setUint32(18,data.length,true); lv.setUint32(22,data.length,true);
+    lv.setUint16(26,name.length,true); lv.setUint16(28,0,true); lh.set(name,30);
+    chunks.push(lh,data);
+    const ch=new Uint8Array(46+name.length); const cv=new DataView(ch.buffer);
+    cv.setUint32(0,0x02014b50,true); cv.setUint16(4,20,true); cv.setUint16(6,20,true);
+    cv.setUint16(8,0x0800,true); cv.setUint16(10,0,true); cv.setUint16(12,t,true); cv.setUint16(14,d,true);
+    cv.setUint32(16,crc,true); cv.setUint32(20,data.length,true); cv.setUint32(24,data.length,true);
+    cv.setUint16(28,name.length,true); cv.setUint16(30,0,true); cv.setUint16(32,0,true);
+    cv.setUint16(34,0,true); cv.setUint16(36,0,true); cv.setUint32(38,0,true); cv.setUint32(42,offset,true);
+    ch.set(name,46); central.push(ch); offset+=lh.length+data.length;
+  }
+  const cs=central.reduce((s,c)=>s+c.length,0); const co=offset;
+  const end=new Uint8Array(22); const ev=new DataView(end.buffer);
+  ev.setUint32(0,0x06054b50,true); ev.setUint16(4,0,true); ev.setUint16(6,0,true);
+  ev.setUint16(8,files.length,true); ev.setUint16(10,files.length,true); ev.setUint32(12,cs,true); ev.setUint32(16,co,true); ev.setUint16(20,0,true);
+  const all=[...chunks,...central,end]; const total=all.reduce((s,p)=>s+p.length,0);
+  const out=new Uint8Array(total); let p=0; for(const x of all){ out.set(x,p); p+=x.length; } return out;
+}
+function savePackage(){
+  try{
+    // 当前完整状态：内存中的 DATA 已不含被删项，deleted 数组含被删 URL
+    const dataJSON = JSON.stringify(DATA).replace(/</g,'\\u003c');
+    const deletedJSON = JSON.stringify(deleted).replace(/</g,'\\u003c');
+    // 为这份副本分配独立的 localStorage 命名空间，避免与网页本身或其他副本相互污染
+    const uid = Math.random().toString(36).slice(2,10);
+    // 移除上一次保存可能残留的种子脚本（仅当本页本身是某次保存产物时）
+    const oldSeed=document.getElementById('__aihubSeed');
+    if(oldSeed && oldSeed.parentNode) oldSeed.parentNode.removeChild(oldSeed);
+    // 序列化当前 DOM，并把“当前数据”直接写进源码，使副本自包含、可独立运行
+    let html='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
+    html=html.replace(/const DATA = \[[\s\S]*?\];/, 'const DATA = '+dataJSON+';');
+    html=html.replace(/let deleted = \[\];/, 'let deleted = '+deletedJSON+';');
+    html=html.replace(/const LS_KEY = "aihub_user_tools";/, 'const LS_KEY = "aihub_user_tools_'+uid+'";');
+    html=html.replace(/const LS_DEL = "aihub_deleted";/, 'const LS_DEL = "aihub_deleted_'+uid+'";');
+    html=html.replace(/const LS_BEST="aihub_game_best", LS_EGG="aihub_game_egg";/, 'const LS_BEST="aihub_game_best_'+uid+'", LS_EGG="aihub_game_egg_'+uid+'";');
+    html=html.replace(/localStorage\.removeItem\('aihub_user_tools'\)/g, "localStorage.removeItem('aihub_user_tools_"+uid+"')");
+    html=html.replace(/localStorage\.removeItem\('aihub_deleted'\)/g, "localStorage.removeItem('aihub_deleted_"+uid+"')");
+    html=html.replace(/localStorage\.removeItem\('aihub_game_best'\)/g, "localStorage.removeItem('aihub_game_best_"+uid+"')");
+    html=html.replace(/localStorage\.removeItem\('aihub_game_egg'\)/g, "localStorage.removeItem('aihub_game_egg_"+uid+"')");
+    const readme='AI自定义导航站 — 便携版（独立副本）\n\n使用方法：解压后直接双击 ai-hub.html，即可在任意电脑的浏览器中打开运行，无需联网、无需安装。\n本文件已把“保存时的全部链接与删除记录”直接写进源码，是一份自包含的独立快照，与其他副本、原网页互不影响。\n\n—— 关于“重启后文件消失”的解决办法 ——\n浏览器会把压缩包下载到系统的「下载」文件夹（这是持久目录，重启不会丢）。\n请务必：1) 在下载文件夹里找到“AI自定义导航站_便携版.zip”；2) 右键解压；3) 把里面的 ai-hub.html 复制/移动到桌面或文档等固定位置长期保存。\n切勿把文件留在网盘预览、临时窗口或浏览器缓存里，那些地方重启会被清理。\n\n（如需 .rar 格式，可用 WinRAR / 7-Zip 把里面的文件重新压缩为 rar。）\n';
+    const enc=new TextEncoder();
+    const zip=makeZip([
+      {name:'ai-hub.html', data:enc.encode(html)},
+      {name:'README.txt', data:enc.encode(readme)}
+    ]);
+    const blob=new Blob([zip],{type:'application/zip'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download='AI自定义导航站_便携版.zip'; document.body.appendChild(a); a.click();
+    setTimeout(function(){ try{ URL.revokeObjectURL(a.href); }catch(e){} a.remove(); }, 1000);
+    toastMsg('已生成压缩包并保存到「下载」文件夹 ✓ 请解压后把 ai-hub.html 放到桌面/文档长期使用');
+  }catch(err){ toastMsg('保存失败：'+(err&&err.message||err)); }
+}
+
+/* ===== 顶部小游戏：恐龙快跑（视差背景 / 关卡 / 彩蛋）===== */
+(function(){
+  const cv=document.getElementById('game');
+  if(!cv) return;
+  const ctx=cv.getContext('2d');
+  const GRAV=0.62, JUMP=-11, baseSpeed=4.2, maxSpeed=13, maxHP=5, SHIELD_TIME=600;
+  const LS_BEST="aihub_game_best", LS_EGG="aihub_game_egg";
+
+  // 关卡配色（天空渐变 / 远近山丘 / 地面 / 障碍色）
+  const LEVELS=[
+    {name:"草原", sky1:"#c7d2d6",sky2:"#e2e7e9", hill:"#9aa896",hill2:"#7e8f80", ground:"#8c977f",ground2:"#7b876c", soil:"#6f6354", cloud:"#eef1f2", tree:"#4caf50"},
+    {name:"沙漠", sky1:"#dbd4c6",sky2:"#ebe6da", hill:"#cabfa6",hill2:"#b8ad95", ground:"#d0c5ab",ground2:"#c0b597", soil:"#b3a487", cloud:"#f2eee6", tree:"#caa15a"},
+    {name:"森林", sky1:"#c1cfce",sky2:"#dde6e2", hill:"#7e968a",hill2:"#6a8478", ground:"#7b9185",ground2:"#6a8176", soil:"#5f5240", cloud:"#eef2f1", tree:"#3f9a45"},
+    {name:"城镇", sky1:"#cdd0d8",sky2:"#e5e7ec", hill:"#99a0ad",hill2:"#878e9b", ground:"#99a0ac",ground2:"#858c98", soil:"#6f6453", cloud:"#eef0f3", tree:"#6c8cff"},
+    {name:"雪原", sky1:"#d2dae0",sky2:"#eef2f5", hill:"#c2cad2",hill2:"#b1bac4", ground:"#e2e9ee",ground2:"#d2dae1", soil:"#c2c9d1", cloud:"#f2f5f7", tree:"#9bb9d6"},
+  ];
+  // 树种调色板：树干统一棕色，树叶按种类变化（阔叶绿 / 枫叶红 / 金叶 / 松针深绿）
+  const TREE_SPECIES=[
+    {leaf:"#4caf50",shape:"round"}, {leaf:"#3f9a45",shape:"round"}, {leaf:"#e8553a",shape:"round"},
+    {leaf:"#e8862e",shape:"round"}, {leaf:"#e0b400",shape:"round"}, {leaf:"#2f7d4f",shape:"pine"},
+  ];
+  const BUSH_COLORS=["#4caf50","#3f9a45","#e8553a","#e0b400","#6aa06a"];
+  const THRESH=[0,400,800,1200,1600];
+  function levelIndex(s){ let i=0; for(let k=0;k<THRESH.length;k++) if(s>=THRESH[k]) i=k; return i; }
+
+  let best=+(localStorage.getItem(LS_BEST)||0);
+  let eggBase=+(localStorage.getItem(LS_EGG)||0);
+  let eggUnlocked = eggBase>=1000;
+
+  let W,H,ground,dino,obstacles,coins,fruits,fireflies,speed,score,frame,state="start",hp=maxHP,inv=0,shield=0,dayPhase=0.15,nightFactor=0,cityX=0;
+  let cloudX=0,hillX=0,groundX=0,legPhase=0,lastLevel=0,levelToast=0,eggToast=0;
+  const STARS=[]; for(let i=0;i<46;i++) STARS.push({x:Math.random(),y:Math.random()*0.55,r:Math.random()*1.1+0.4,ph:Math.random()*6});
+  const pick=a=>a[Math.floor(Math.random()*a.length)];
+  let actx=null;
+  function ac(){ try{ if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} if(actx&&actx.state==='suspended') actx.resume(); return actx; }
+  function beep(freq,start,dur,wave,vol,slide){
+    const c=ac(); if(!c) return;
+    const o=c.createOscillator(), g=c.createGain();
+    o.type=wave||'sine'; o.frequency.setValueAtTime(freq, c.currentTime+start);
+    if(slide) o.frequency.exponentialRampToValueAtTime(slide, c.currentTime+start+dur);
+    g.gain.setValueAtTime(vol||0.07, c.currentTime+start);
+    g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime+start+dur);
+    o.connect(g); g.connect(c.destination); o.start(c.currentTime+start); o.stop(c.currentTime+start+dur+0.02);
+  }
+  function sfx(type){
+    if(type==='jump'){ beep(380,0,0.12,'square',0.05,620); }
+    else if(type==='coin'){ beep(880,0,0.07,'sine',0.07); beep(1320,0.07,0.09,'sine',0.07); }
+    else if(type==='fruit'){ beep(523,0,0.09,'triangle',0.07); beep(659,0.09,0.09,'triangle',0.07); beep(784,0.18,0.12,'triangle',0.07); }
+    else if(type==='hit'){ beep(150,0,0.18,'sawtooth',0.1,90); }
+    else if(type==='over'){ beep(420,0,0.5,'sawtooth',0.09,110); }
+    else if(type==='level'){ [523,659,784,1046].forEach((f,i)=>beep(f,i*0.08,0.13,'triangle',0.07)); }
+    else if(type==='egg'){ [784,988,1318,1568].forEach((f,i)=>beep(f,i*0.07,0.15,'sine',0.07)); }
+    else if(type==='shield'){ [523,784,1046,1318].forEach((f,i)=>beep(f,i*0.06,0.12,'sine',0.06)); }
+  }
+
+  const ovStart=document.getElementById('ovStart');
+  const ovOver=document.getElementById('ovOver');
+  const btnStart=document.getElementById('btnStart');
+  const btnRestart=document.getElementById('btnRestart');
+  const finalScore=document.getElementById('finalScore');
+  const bestScoreEl=document.getElementById('bestScore');
+
+  function fit(){ cv.width=cv.clientWidth*devicePixelRatio; cv.height=cv.clientHeight*devicePixelRatio; ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0); }
+  function reset(){
+    H=cv.clientHeight; W=cv.clientWidth; ground=H-16;
+    dino={x:34,y:ground,vy:0,onGround:true,jumps:0,w:30,h:34};
+    obstacles=[]; coins=[]; fruits=[]; fireflies=[]; speed=baseSpeed; score=0; frame=0; legPhase=0; hp=maxHP; inv=0; shield=0;
+    cloudX=0; hillX=0; groundX=0; lastLevel=0; levelToast=0;
+  }
+  const maxJumps=()=> eggUnlocked?3:2;
+
+  function makeObstacle(t){
+    switch(t){
+      case 'tree': { const h=34+Math.random()*16; const sp=TREE_SPECIES[Math.floor(Math.random()*TREE_SPECIES.length)]; return {type:'tree',x:W,w:18,h:h,leaf:sp.leaf,shape:sp.shape}; }
+      case 'bush': { const h=14+Math.random()*8; const lc=BUSH_COLORS[Math.floor(Math.random()*BUSH_COLORS.length)]; return {type:'bush',x:W,w:26+Math.random()*8,h:h,leaf:lc}; }
+      case 'river': { const w=46+Math.random()*34; return {type:'river',x:W,w:w,h:9}; }
+      case 'rock': { const h=22+Math.random()*10; return {type:'rock',x:W,w:20,h:h}; }
+      case 'cactus': { const h=30+Math.random()*16; return {type:'cactus',x:W,w:18,h:h}; }
+      case 'snake': { return {type:'snake',x:W,w:30+Math.random()*10,h:9}; }
+      case 'trash': { return {type:'trash',x:W,w:18,h:26+Math.random()*6}; }
+      case 'lamp': { return {type:'lamp',x:W,w:10,h:38+Math.random()*6}; }
+      case 'building': { const w=42+Math.random()*28, h=40+Math.random()*30; return {type:'building',x:W,w:w,h:h}; }
+      default: { const h=22+Math.random()*10; return {type:'rock',x:W,w:20,h:h}; }
+    }
+  }
+  function spawn(){
+    const li=levelIndex(score);
+    const obsP = Math.min(0.062, 0.024 + score*0.000018);
+    const obsGap = Math.max(118, 190 - score*0.028);
+    if(!obstacles.length || obstacles[obstacles.length-1].x < W-obsGap){
+      if(Math.random()<obsP){
+        let pool;
+        if(li===0) pool=['tree','bush','rock','river'];
+        else if(li===1) pool=['cactus','cactus','snake','rock','river'];
+        else if(li===2) pool=['tree','tree','tree','bush','bush','rock'];
+        else if(li===3) pool=['tree','bush','rock','trash','lamp'];
+        else pool=['tree','rock','snake','river'];
+        let t=pick(pool);
+        if(nightFactor>0.5 && Math.random()<0.55) t=pick(['building','building','trash','lamp']);
+        obstacles.push(makeObstacle(t));
+      }
+    }
+    const coinP = Math.max(0.004, 0.02 - score*0.000013);
+    if(!coins.length || coins[coins.length-1].x < W-130){
+      if(Math.random()<coinP) coins.push({x:W,y:ground-30-Math.random()*52,r:7,got:false});
+    }
+    const fruitP=Math.max(0.006, 0.04 - score*0.00003);
+    if(!fruits.length || fruits[fruits.length-1].x < W-110){
+      if(Math.random()<fruitP) fruits.push({x:W,y:ground-26-Math.random()*56,r:9,type:Math.random()<0.5?'apple':'banana',got:false});
+    }
+    const ffP=0.0013;   // 萤火虫：出现概率极低
+    if(!fireflies.length || fireflies[fireflies.length-1].x < W-320){
+      if(Math.random()<ffP){ const by=ground-44-Math.random()*34; fireflies.push({x:W, baseY:by, y:by, r:6, ph:Math.random()*6.28, eaten:false}); }
+    }
+  }
+  function jump(){
+    if(state!=='play') return;
+    if(shield>0) return;   // 金钟罩期间不可移动（不能跳跃）
+    if(dino.jumps<maxJumps()){ dino.vy = dino.jumps===0?JUMP:JUMP*0.84; dino.onGround=false; dino.jumps++; sfx('jump'); }
+  }
+  function startGame(){ ac(); ovStart.classList.add('hidden'); ovOver.classList.add('hidden'); reset(); state='play'; }
+  function die(){
+    state='over'; sfx('over');
+    best=Math.max(best,Math.floor(score)); localStorage.setItem(LS_BEST,best);
+    if(!eggUnlocked){ eggBase+=Math.floor(score); localStorage.setItem(LS_EGG, Math.min(eggBase,999)); }
+    finalScore.textContent=Math.floor(score); bestScoreEl.textContent=best;
+    ovOver.classList.remove('hidden');
+  }
+  function update(){
+    frame++;
+    speed=Math.min(maxSpeed, baseSpeed + score*0.0022 + frame*0.0007);
+    cloudX+=speed*0.12; if(cloudX>4000)cloudX-=4000;
+    hillX+=speed*0.42; if(hillX>4000)hillX-=4000;
+    groundX+=speed; if(groundX>200)groundX-=200;
+    dayPhase=(dayPhase+0.0011)%1; nightFactor=Math.max(0,Math.sin((dayPhase-0.5)*2*Math.PI)); cityX+=speed;
+    dino.vy+=GRAV; dino.y+=dino.vy;
+    if(dino.y>=ground){ dino.y=ground; dino.vy=0; if(!dino.onGround) dino.jumps=0; dino.onGround=true; }
+    legPhase+=speed*0.25;
+    obstacles.forEach(o=>o.x-=speed); obstacles=obstacles.filter(o=>o.x+o.w>-20);
+    coins.forEach(c=>c.x-=speed); coins=coins.filter(c=>c.x>-20);
+    fruits.forEach(f=>f.x-=speed); fruits=fruits.filter(f=>f.x>-20);
+    if(inv>0) inv--;
+    for(const o of obstacles){
+      if(o.hit) continue;
+      if(shield>0) continue;   // 金钟罩：免疫一切障碍
+      if(dino.x<o.x+o.w && dino.x+dino.w>o.x && dino.y>ground-o.h){
+        o.hit=true; inv=70; sfx('hit');
+        if(hp>0) hp--;
+        if(hp<=0){ die(); return; }
+        break;
+      }
+    }
+    coins.forEach(c=>{ if(!c.got && dino.x<c.x+c.r && dino.x+dino.w>c.x-c.r && (dino.y-dino.h)<c.y+c.r && dino.y>c.y-c.r){ c.got=true; score+=100; sfx('coin'); } });
+    coins=coins.filter(c=>!c.got);
+    fruits.forEach(f=>{ if(!f.got && dino.x<f.x+f.r && dino.x+dino.w>f.x-f.r && (dino.y-dino.h)<f.y+f.r && dino.y>f.y-f.r){ f.got=true; const heal=1+Math.floor(Math.random()*3); hp=Math.min(maxHP,hp+heal); score+=3; sfx('fruit'); } });
+    fruits=fruits.filter(f=>!f.got);
+    fireflies.forEach(f=>{ f.ph+=0.12; f.y=f.baseY+Math.sin(f.ph)*7; f.x-=speed; });
+    fireflies=fireflies.filter(f=>f.x>-20);
+    fireflies.forEach(f=>{
+      if(!f.eaten && dino.x<f.x+f.r && dino.x+dino.w>f.x-f.r && dino.y-dino.h<f.y+f.r && dino.y>f.y-f.r){
+        f.eaten=true;
+        if(shield<=0){ shield=SHIELD_TIME; sfx('shield'); }   // 获得 10s 金钟罩
+      }
+    });
+    fireflies=fireflies.filter(f=>!f.eaten);
+    if(shield>0) shield--;
+    score+=0.08;
+    spawn();
+    const li=levelIndex(score);
+    if(li>lastLevel){ lastLevel=li; levelToast=80; sfx('level'); }
+    const cur=eggBase+score;
+    if(!eggUnlocked && cur>=1000){ eggUnlocked=true; localStorage.setItem(LS_EGG,1000); eggToast=150; sfx('egg'); }
+  }
+
+  /* ---------- 绘制 ---------- */
+  function roundRect(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+  function cloud(x,y){ ctx.beginPath(); ctx.arc(x,y,9,0,7); ctx.arc(x+12,y+2,11,0,7); ctx.arc(x+26,y,8,0,7); ctx.arc(x+13,y-5,9,0,7); ctx.fill(); }
+  function drawClouds(color,off,alpha){
+    ctx.save(); ctx.globalAlpha=alpha; ctx.fillStyle=color;
+    const spacing=200; let baseX=-(off%spacing); let k=0;
+    for(let x=baseX;x<W+spacing;x+=spacing){ const y=16+(k%3)*12; cloud(x+(k*53%40),y); k++; }
+    ctx.restore();
+  }
+  function pseudo(n){ const x=Math.sin(n*127.1)*43758.5453; return x-Math.floor(x); }
+  // 半圆形土丘（前景）
+  function drawMounds(off, amp, color, baseY, spacing, alpha, hvar){
+    ctx.save(); ctx.globalAlpha=alpha; ctx.fillStyle=color;
+    let s=-(off%spacing); let idx=Math.floor(off/spacing);
+    for(let x=s; x<W+spacing; x+=spacing, idx++){
+      const hh = amp*(0.58 + 0.42*pseudo(idx*hvar));
+      ctx.beginPath(); ctx.arc(x+spacing/2, baseY, hh, Math.PI, 2*Math.PI, false); ctx.fill();
+    }
+    ctx.fillRect(0, baseY, W, ground-baseY+2);
+    ctx.restore();
+  }
+  // 三角形层峦叠嶂山脉（近大远小、近实远虚）
+  function drawMountains(off, amp, color, baseY, spacing, alpha, hvar, cap){
+    ctx.save(); ctx.globalAlpha=alpha; ctx.fillStyle=color;
+    let s=-(off%spacing)-spacing; let idx=Math.floor(off/spacing)-1;
+    for(let x=s; x<W+spacing*2; x+=spacing, idx++){
+      const hh = amp*(0.6 + 0.4*pseudo(idx*hvar));
+      const hw = spacing*0.62;            // 比间距宽 → 相邻山体重叠，形成连绵山脊
+      ctx.beginPath();
+      ctx.moveTo(x-hw, baseY);
+      ctx.lineTo(x, baseY-hh);
+      ctx.lineTo(x+hw, baseY);
+      ctx.closePath(); ctx.fill();
+      if(cap){                            // 雪原：山顶白色雪冠
+        ctx.fillStyle=cap;
+        const cw=hw*0.32, ch=hh*0.24;
+        ctx.beginPath();
+        ctx.moveTo(x-cw, baseY-hh+ch);
+        ctx.lineTo(x, baseY-hh);
+        ctx.lineTo(x+cw, baseY-hh+ch);
+        ctx.closePath(); ctx.fill();
+        ctx.fillStyle=color;
+      }
+    }
+    ctx.restore();
+  }
+  function drawGroundDetail(off){
+    ctx.save(); ctx.fillStyle='rgba(0,0,0,.10)';
+    const spacing=26; let s=-(off%spacing);
+    for(let x=s;x<W+spacing;x+=spacing){ ctx.fillRect(x,ground+6,6,2); }
+    ctx.restore();
+  }
+  function drawBG(li){
+    const L=LEVELS[li];
+    let g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,L.sky1); g.addColorStop(1,L.sky2);
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    drawClouds(L.cloud, cloudX*0.5, 0.85);
+    // 远山：小、淡（远小远虚）
+    drawMountains(cloudX*0.3, 24, L.hill2, ground, 190, 0.40, 3.1, li===4?'rgba(255,255,255,.70)':null);
+    // 中山：中、较实
+    drawMountains(hillX*0.5, 38, L.hill,  ground, 220, 0.64, 5.7, li===4?'rgba(255,255,255,.82)':null);
+    // 近山：大、实（近大近实）
+    drawMountains(hillX*0.8, 54, L.hill,  ground, 250, 0.90, 8.3, li===4?'rgba(255,255,255,.92)':null);
+    ctx.fillStyle=L.ground; ctx.fillRect(0,ground,W,H-ground);
+    ctx.fillStyle=L.ground2; ctx.fillRect(0,ground,W,4);
+    ctx.fillStyle=L.soil; ctx.fillRect(0,H-5,W,5);
+    drawGroundDetail(groundX);
+    // 前景土丘：半圆形
+    drawMounds(hillX*1.1, 13, L.hill, ground, 120, 0.95, 11.3);
+    if(nightFactor>0.02){
+      ctx.fillStyle='rgba(12,16,34,'+(nightFactor*0.55)+')'; ctx.fillRect(0,0,W,H);
+      drawStars();
+    }
+  }
+  function drawStars(){
+    ctx.save();
+    for(const s of STARS){
+      const a=nightFactor*(0.55+0.45*Math.sin(frame*0.05+s.ph));
+      ctx.globalAlpha=Math.max(0,a); ctx.fillStyle='#fff';
+      ctx.beginPath(); ctx.arc(s.x*W, s.y*H, s.r,0,7); ctx.fill();
+    }
+    ctx.restore();
+    if(nightFactor>0.1){
+      const mx=W-70, my=34;
+      ctx.fillStyle='rgba(245,245,210,'+(0.9*nightFactor)+')';
+      ctx.beginPath(); ctx.arc(mx,my,12,0,7); ctx.fill();
+      ctx.fillStyle='rgba(12,16,34,'+(0.9*nightFactor)+')';
+      ctx.beginPath(); ctx.arc(mx+5,my-3,11,0,7); ctx.fill();
+    }
+  }
+  function drawObstacle(o,L){
+    if(o.type==='tree'){
+      const cx=o.x+o.w/2;
+      const trunkH = o.shape==='pine'? o.h*0.35 : o.h*0.9;
+      ctx.fillStyle='#7a5230'; ctx.fillRect(cx-3, ground-trunkH, 6, trunkH);
+      ctx.fillStyle=o.leaf;
+      if(o.shape==='pine'){
+        const top=ground-o.h, baseY=ground-o.h*0.3, ww=o.w*1.15;
+        ctx.beginPath(); ctx.moveTo(cx,top); ctx.lineTo(cx-ww/2,baseY); ctx.lineTo(cx+ww/2,baseY); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(cx,top+o.h*0.22); ctx.lineTo(cx-ww*0.72,baseY+o.h*0.22); ctx.lineTo(cx+ww*0.72,baseY+o.h*0.22); ctx.closePath(); ctx.fill();
+      }else{
+        ctx.beginPath(); ctx.arc(cx,ground-o.h-2,o.w*0.95,0,7); ctx.arc(cx-6,ground-o.h+2,o.w*0.7,0,7); ctx.arc(cx+6,ground-o.h+2,o.w*0.7,0,7); ctx.fill();
+      }
+    }else if(o.type==='bush'){
+      ctx.fillStyle=o.leaf;
+      ctx.beginPath(); ctx.arc(o.x+o.w*0.3,ground-o.h/2,o.h*0.7,0,7); ctx.arc(o.x+o.w*0.7,ground-o.h/2,o.h*0.7,0,7); ctx.arc(o.x+o.w*0.5,ground-o.h,o.h*0.6,0,7); ctx.fill();
+    }else if(o.type==='rock'){
+      ctx.fillStyle='#8a8f99'; ctx.beginPath(); ctx.moveTo(o.x,ground); ctx.lineTo(o.x+o.w*0.5,ground-o.h); ctx.lineTo(o.x+o.w,ground); ctx.closePath(); ctx.fill();
+    }else if(o.type==='river'){
+      ctx.fillStyle='#3aa0e6'; ctx.fillRect(o.x,ground-o.h,o.w,o.h+4);
+      ctx.fillStyle='rgba(255,255,255,.35)'; ctx.fillRect(o.x,ground-o.h,o.w,2);
+    }else if(o.type==='cactus'){
+      const w=o.w, h=o.h, cx=o.x+w/2;
+      ctx.fillStyle='#3f9a5a';
+      ctx.fillRect(cx-4, ground-h, 8, h);
+      ctx.fillRect(cx-13, ground-h*0.55, 8, h*0.42);
+      ctx.fillRect(cx-13, ground-h*0.78, 5, 10);
+      ctx.fillRect(cx+5, ground-h*0.68, 8, h*0.42);
+      ctx.fillRect(cx+8, ground-h*0.9, 5, 10);
+      ctx.fillStyle='#e8553a'; ctx.fillRect(cx-2, ground-h-3, 4, 3);
+    }else if(o.type==='snake'){
+      const y=ground-4, w=o.w;
+      ctx.strokeStyle='#c9a14a'; ctx.lineWidth=5; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(o.x,y);
+      for(let i=0;i<=w;i+=3) ctx.lineTo(o.x+i, y-Math.abs(Math.sin((i+frame)*0.4))*5);
+      ctx.stroke();
+      ctx.fillStyle='#b5894a'; ctx.beginPath(); ctx.arc(o.x+w, y-2, 4,0,7); ctx.fill();
+      ctx.fillStyle='#eee'; ctx.beginPath(); ctx.arc(o.x, y, 3,0,7); ctx.fill();
+    }else if(o.type==='trash'){
+      const w=o.w, h=o.h;
+      ctx.fillStyle='#6b7280'; ctx.fillRect(o.x+2, ground-h+6, w-4, h-6);
+      ctx.fillStyle='#9aa3b0'; ctx.fillRect(o.x, ground-h, w, 6);
+      ctx.fillStyle='#4b5563'; ctx.fillRect(o.x+w/2-2, ground-h+9, 4, 3);
+      ctx.fillStyle='rgba(0,0,0,.18)'; ctx.fillRect(o.x+5, ground-h+11, w-10, h-14);
+    }else if(o.type==='lamp'){
+      const w=o.w, h=o.h, lx=o.x+w/2, ly=ground-h+6;
+      ctx.fillStyle='#3a3f4a'; ctx.fillRect(lx-2, ground-h, 4, h);
+      ctx.fillStyle='#2a2e38'; ctx.fillRect(o.x, ground-h, w, 6);
+      const g=ctx.createRadialGradient(lx,ly,1,lx,ly,24); g.addColorStop(0,'rgba(255,224,130,0.85)'); g.addColorStop(1,'rgba(255,224,130,0)');
+      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(lx,ly,24,0,7); ctx.fill();
+      ctx.fillStyle='#ffe082'; ctx.beginPath(); ctx.arc(lx,ly,4,0,7); ctx.fill();
+    }else if(o.type==='building'){
+      const w=o.w, h=o.h;
+      ctx.fillStyle='#3a3f4a'; ctx.fillRect(o.x, ground-h, w, h);
+      ctx.fillStyle='#2a2e38'; ctx.fillRect(o.x, ground-h, w, 5);
+      ctx.fillStyle='rgba(255,214,120,0.92)';
+      for(let wy=ground-h+9; wy<ground-6; wy+=10)
+        for(let wx=o.x+5; wx<o.x+w-5; wx+=11)
+          if(Math.abs(((wx*7+wy*13+o.x*101))%5)<2) ctx.fillRect(wx,wy,5,5);
+    }
+  }
+  function drawDino(){
+    const x=dino.x,y=dino.y,w=dino.w,h=dino.h,top=y-h;
+    ctx.save();
+    if(inv>0 && frame%10<5) ctx.globalAlpha=0.35;
+    ctx.fillStyle='#54c25a';
+    ctx.beginPath(); ctx.moveTo(x,top+h*0.5); ctx.lineTo(x-10,top+h*0.3); ctx.lineTo(x,top+h*0.7); ctx.closePath(); ctx.fill();
+    roundRect(x,top,w,h,8); ctx.fill();
+    ctx.fillStyle='#8ee08f'; roundRect(x+w*0.15,top+h*0.45,w*0.8,h*0.5,5); ctx.fill();
+    ctx.fillStyle='#54c25a'; roundRect(x+w*0.55,top-4,w*0.6,h*0.55,7); ctx.fill();
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(x+w*0.95,top+8,4,0,7); ctx.fill();
+    ctx.fillStyle='#222'; ctx.beginPath(); ctx.arc(x+w*0.98,top+8,2,0,7); ctx.fill();
+    ctx.fillStyle='#3f9a45';
+    const sw=dino.onGround?Math.sin(legPhase)*4:0;
+    ctx.fillRect(x+w*0.25,y-6,5,6+sw);
+    ctx.fillRect(x+w*0.55,y-6,5,6-sw);
+    ctx.restore();
+  }
+  function drawCoins(){ coins.forEach(c=>{ ctx.fillStyle='#ffd34d'; ctx.beginPath(); ctx.arc(c.x,c.y,c.r,0,7); ctx.fill(); ctx.fillStyle='#fff3b0'; ctx.beginPath(); ctx.arc(c.x-c.r*0.3,c.y-c.r*0.3,c.r*0.4,0,7); ctx.fill(); }); }
+  function drawHeart(x,y,s,filled){
+    ctx.fillStyle = filled ? '#ff5d73' : 'rgba(255,255,255,.22)';
+    ctx.beginPath();
+    ctx.moveTo(x, y+s*0.32);
+    ctx.bezierCurveTo(x, y, x-s*0.5, y, x-s*0.5, y+s*0.32);
+    ctx.bezierCurveTo(x-s*0.5, y+s*0.62, x, y+s*0.85, x, y+s);
+    ctx.bezierCurveTo(x, y+s*0.85, x+s*0.5, y+s*0.62, x+s*0.5, y+s*0.32);
+    ctx.bezierCurveTo(x+s*0.5, y, x, y, x, y+s*0.32);
+    ctx.fill();
+  }
+  function drawHearts(){
+    const s=11, gap=3, x0=12, y0=30;
+    for(let i=0;i<maxHP;i++) drawHeart(x0+i*(s+gap), y0, s, i<hp);
+  }
+  function drawFruits(){
+    fruits.forEach(f=>{
+      if(f.type==='apple'){
+        ctx.fillStyle='#e23b4e'; ctx.beginPath(); ctx.arc(f.x,f.y,f.r,0,7); ctx.fill();
+        ctx.fillStyle='#7a3b1f'; ctx.fillRect(f.x-1,f.y-f.r-3,2,5);
+        ctx.fillStyle='#3fae57'; ctx.beginPath(); ctx.ellipse(f.x+5,f.y-f.r,4,2,0.5,0,7); ctx.fill();
+      }else{
+        ctx.fillStyle='#ffce3a';
+        ctx.beginPath();
+        ctx.arc(f.x-3,f.y,f.r,Math.PI*0.15,Math.PI*1.05,false);
+        ctx.arc(f.x+3,f.y,f.r,Math.PI*1.05,Math.PI*0.15,true);
+        ctx.closePath(); ctx.fill();
+        ctx.fillStyle='#b8860b'; ctx.fillRect(f.x+5,f.y+1,3,3);
+      }
+    });
+  }
+  function drawFireflies(){
+    fireflies.forEach(f=>{
+      const pulse=0.55+0.45*Math.sin(f.ph*2);
+      const g=ctx.createRadialGradient(f.x,f.y,0.5,f.x,f.y,16);
+      g.addColorStop(0,'rgba(220,255,120,'+(0.9*pulse)+')');
+      g.addColorStop(0.45,'rgba(190,255,80,'+(0.4*pulse)+')');
+      g.addColorStop(1,'rgba(190,255,80,0)');
+      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(f.x,f.y,16,0,7); ctx.fill();
+      ctx.fillStyle='rgba(245,255,190,'+pulse+')'; ctx.beginPath(); ctx.arc(f.x,f.y,2.2,0,7); ctx.fill();
+    });
+  }
+  function drawShield(){
+    if(shield<=0) return;
+    const x=dino.x+dino.w/2, y=dino.y-dino.h/2, R=Math.max(dino.w,dino.h)*1.05;
+    const a=0.5+0.3*Math.sin(frame*0.18);
+    ctx.save();
+    const g=ctx.createRadialGradient(x,y,2,x,y,R*1.15);
+    g.addColorStop(0,'rgba(255,220,110,'+(0.16*a)+')'); g.addColorStop(1,'rgba(255,220,110,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,R*1.15,0,7); ctx.fill();
+    ctx.strokeStyle='rgba(255,210,90,'+a+')'; ctx.lineWidth=2.5;
+    ctx.beginPath(); ctx.arc(x,y,R,0,7); ctx.stroke();
+    ctx.restore();
+  }
+  function drawHUD(li){
+    ctx.textBaseline='alphabetic';
+    ctx.fillStyle='rgba(0,0,0,.55)'; ctx.font='bold 12px sans-serif';
+    ctx.textAlign='left'; ctx.fillText('分数 '+Math.floor(score), 12, 18);
+    ctx.textAlign='right'; ctx.fillText('最高 '+best, W-12, 18);
+    ctx.textAlign='center'; ctx.fillText('第'+(li+1)+'关 · '+LEVELS[li].name, W/2, 18);
+    if(nightFactor>0.35){ ctx.textAlign='center'; ctx.fillStyle='#cdd6ff'; ctx.fillText('· 夜晚', W/2, 34); }
+    if(eggUnlocked){ ctx.textAlign='right'; ctx.fillStyle='#ffd166'; ctx.fillText('🥚三段跳', W-12, 34); }
+    drawHearts();
+    if(shield>0){ ctx.textAlign='left'; ctx.fillStyle='#ffd166'; ctx.font='bold 12px sans-serif'; ctx.fillText('🛡 金钟罩 '+Math.ceil(shield/60)+'s', 12, 46); }
+    if(levelToast>0){ ctx.save(); ctx.globalAlpha=Math.min(1,levelToast/40); ctx.fillStyle='#fff'; ctx.font='bold 15px sans-serif'; ctx.textAlign='center'; ctx.fillText('进入第'+(li+1)+'关 · '+LEVELS[li].name+'！', W/2, H/2-8); ctx.restore(); }
+    if(eggToast>0){ ctx.save(); ctx.globalAlpha=Math.min(1,eggToast/40); ctx.font='bold 15px sans-serif'; ctx.textAlign='center'; const t='🥚 隐藏菜单解锁！三段跳开启！'; const tw=ctx.measureText(t).width; ctx.fillStyle='rgba(20,24,40,.82)'; roundRect(W/2-tw/2-12, H/2+1, tw+24, 26, 8); ctx.fill(); ctx.fillStyle='#ffd166'; ctx.fillText(t, W/2, H/2+19); ctx.restore(); }
+  }
+  function draw(){
+    const li=levelIndex(score);
+    drawBG(li);
+    obstacles.forEach(o=>drawObstacle(o,li));
+    drawCoins();
+    drawFruits();
+    drawFireflies();
+    drawDino();
+    drawShield();
+    drawHUD(li);
+  }
+  function loop(){
+    if(state==='play'){ update(); }
+    else { cloudX+=0.15; hillX+=0.4; dayPhase=(dayPhase+0.0006)%1; nightFactor=Math.max(0,Math.sin((dayPhase-0.5)*2*Math.PI)); cityX+=0.4; }
+    if(eggToast>0)eggToast--; if(levelToast>0)levelToast--;
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  window.addEventListener('keydown',e=>{ if(e.code==='Space'||e.code==='ArrowUp'){ e.preventDefault(); if(state==='play') jump(); else startGame(); } });
+  cv.addEventListener('mousedown',()=>{ if(state==='play') jump(); else startGame(); });
+  if(btnStart) btnStart.onclick=startGame;
+  if(btnRestart) btnRestart.onclick=startGame;
+  window.addEventListener('resize',()=>{ fit(); if(state!=='play') reset(); });
+  fit(); reset(); loop();
+})();
+</script>
+</body>
+</html>
